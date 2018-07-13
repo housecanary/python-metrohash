@@ -1,7 +1,6 @@
 from setuptools import setup
 from setuptools.extension import Extension
 from setuptools.dist import Distribution
-from pkg_resources import resource_string
 
 
 try:
@@ -48,6 +47,7 @@ CMDCLASS = {}
 EXT_MODULES = []
 
 if USE_CYTHON:
+    print('Using Cython.')
     EXT_MODULES.append(
         Extension(
             "metrohash",
@@ -55,7 +55,8 @@ if USE_CYTHON:
             depends=CXXHEADERS,
             language="c++",
             extra_compile_args=CXXFLAGS,
-            include_dirs=INCLUDE_DIRS)
+            include_dirs=INCLUDE_DIRS,
+        )
     )
     CMDCLASS['build_ext'] = build_ext
 else:
@@ -69,8 +70,11 @@ else:
             include_dirs=INCLUDE_DIRS)
     )
 
-VERSION = '0.0.13'
+VERSION = '0.0.13+hc1'
 URL = "https://github.com/escherba/python-metrohash"
+
+with open('README.rst', 'r') as readme:
+    long_description = readme.read()
 
 setup(
     version=VERSION,
@@ -101,6 +105,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Topic :: Utilities'
     ],
-    long_description=resource_string(__name__, 'README.rst'),
+    long_description=long_description,
     distclass=BinaryDistribution,
 )

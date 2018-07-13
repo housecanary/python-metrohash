@@ -60,6 +60,7 @@ from cpython.buffer cimport PyObject_CheckBuffer
 from cpython.buffer cimport PyBUF_SIMPLE
 from cpython.buffer cimport Py_buffer
 from cpython.buffer cimport PyObject_GetBuffer
+from cpython.buffer cimport PyBuffer_Release
 
 from cpython.unicode cimport PyUnicode_Check
 from cpython.unicode cimport PyUnicode_AsUTF8String
@@ -77,25 +78,30 @@ cdef object _type_error(str argname, expected, value):
     )
 
 
+cdef object _bad_buffer(ndim, itemsize):
+    msg = (
+        'Buffer returned by object had (ndim, itemsize) of (%s, %s) instead of'
+        ' (0 or 1, 1)'
+    )
+    return TypeError(msg % (ndim, itemsize))
+
+
 cpdef metrohash64(data, uint64 seed=0ULL):
     """64-bit hash function for a basestring or buffer type
     """
     cdef Py_buffer buf
     cdef object obj
     cdef uint64 result
-    if PyUnicode_Check(data):
-        obj = PyUnicode_AsUTF8String(data)
-        PyObject_GetBuffer(obj, &buf, PyBUF_SIMPLE)
-        result = c_metrohash64(<const uint8 *>buf.buf, buf.len, seed)
-        Py_DECREF(obj)
-    elif PyString_Check(data):
-        result = c_metrohash64(<const uint8 *>PyString_AS_STRING(data),
-                               PyString_GET_SIZE(data), seed)
-    elif PyObject_CheckBuffer(data):
+    if PyObject_CheckBuffer(data):
         PyObject_GetBuffer(data, &buf, PyBUF_SIMPLE)
+        if buf.itemsize != 1 or buf.ndim not in (0, 1):
+            exc = _bad_buffer(buf.ndim, buf.itemsize)
+            PyBuffer_Release(&buf)
+            raise exc
         result = c_metrohash64(<const uint8 *>buf.buf, buf.len, seed)
+        PyBuffer_Release(&buf)
     else:
-        raise _type_error("data", ["basestring", "buffer"], data)
+        raise _type_error("data", "buffer", data)
     return result
 
 
@@ -105,19 +111,16 @@ cpdef metrohash128(data, uint64 seed=0ULL):
     cdef Py_buffer buf
     cdef object obj
     cdef pair[uint64, uint64] result
-    if PyUnicode_Check(data):
-        obj = PyUnicode_AsUTF8String(data)
-        PyObject_GetBuffer(obj, &buf, PyBUF_SIMPLE)
-        result = c_metrohash128(<const uint8 *>buf.buf, buf.len, seed)
-        Py_DECREF(obj)
-    elif PyString_Check(data):
-        result = c_metrohash128(<const uint8 *>PyString_AS_STRING(data),
-                                PyString_GET_SIZE(data), seed)
-    elif PyObject_CheckBuffer(data):
+    if PyObject_CheckBuffer(data):
         PyObject_GetBuffer(data, &buf, PyBUF_SIMPLE)
+        if buf.itemsize != 1 or buf.ndim not in (0, 1):
+            exc = _bad_buffer(buf.ndim, buf.itemsize)
+            PyBuffer_Release(&buf)
+            raise exc
         result = c_metrohash128(<const uint8 *>buf.buf, buf.len, seed)
+        PyBuffer_Release(&buf)
     else:
-        raise _type_error("data", ["basestring", "buffer"], data)
+        raise _type_error("data", "buffer", data)
     final = 0x10000000000000000L * long(result.first) + long(result.second)
     return final
 
@@ -145,19 +148,16 @@ cdef class MetroHash64(object):
     def update(self, data):
         cdef Py_buffer buf
         cdef object obj
-        if PyUnicode_Check(data):
-            obj = PyUnicode_AsUTF8String(data)
-            PyObject_GetBuffer(obj, &buf, PyBUF_SIMPLE)
-            Py_DECREF(obj)
-            self._m.Update(<const uint8 *>buf.buf, buf.len)
-        elif PyString_Check(data):
-            self._m.Update(<const uint8 *>PyString_AS_STRING(data),
-                           PyString_GET_SIZE(data))
-        elif PyObject_CheckBuffer(data):
+        if PyObject_CheckBuffer(data):
             PyObject_GetBuffer(data, &buf, PyBUF_SIMPLE)
+            if buf.itemsize != 1 or buf.ndim not in (0, 1):
+                exc = _bad_buffer(buf.ndim, buf.itemsize)
+                PyBuffer_Release(&buf)
+                raise exc
             self._m.Update(<const uint8 *>buf.buf, buf.len)
+            PyBuffer_Release(&buf)
         else:
-            raise _type_error("data", ["basestring", "buffer"], data)
+            raise _type_error("data", "buffer", data)
 
     def intdigest(self):
         cdef uint8 buf[8]
@@ -188,19 +188,16 @@ cdef class MetroHash128(object):
     def update(self, data):
         cdef Py_buffer buf
         cdef object obj
-        if PyUnicode_Check(data):
-            obj = PyUnicode_AsUTF8String(data)
-            PyObject_GetBuffer(obj, &buf, PyBUF_SIMPLE)
-            Py_DECREF(obj)
-            self._m.Update(<const uint8 *>buf.buf, buf.len)
-        elif PyString_Check(data):
-            self._m.Update(<const uint8 *>PyString_AS_STRING(data),
-                           PyString_GET_SIZE(data))
-        elif PyObject_CheckBuffer(data):
+        if PyObject_CheckBuffer(data):
             PyObject_GetBuffer(data, &buf, PyBUF_SIMPLE)
+            if buf.itemsize != 1 or buf.ndim not in (0, 1):
+                exc = _bad_buffer(buf.ndim, buf.itemsize)
+                PyBuffer_Release(&buf)
+                raise exc
             self._m.Update(<const uint8 *>buf.buf, buf.len)
+            PyBuffer_Release(&buf)
         else:
-            raise _type_error("data", ["basestring", "buffer"], data)
+            raise _type_error("data", "buffer", data)
 
     def intdigest(self):
         cdef uint8 buf[16]
