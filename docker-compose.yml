@@ -1,0 +1,7 @@
+services:
+  tests:
+    build: .
+    command: pytest tests
+    volumes:
+      - .:/code
+    working_dir: /code

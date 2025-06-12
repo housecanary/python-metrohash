@@ -9,16 +9,14 @@
             "src/metrohash128.h",
             "src/metrohash128crc.h",
             "src/metrohash64.h",
-            "src/platform.h",
-            "src\\metro.h",
-            "src\\metrohash.h",
-            "src\\metrohash128.h",
-            "src\\metrohash128crc.h",
-            "src\\metrohash64.h",
-            "src\\platform.h"
+            "src/platform.h"
         ],
         "extra_compile_args": [
-            "/O2"
+            "-O3",
+            "-Wno-unused-value",
+            "-Wno-unused-function",
+            "-msse4.2",
+            "-maes"
         ],
         "include_dirs": [
             "src"

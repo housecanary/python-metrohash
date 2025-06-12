@@ -59,7 +59,7 @@ else:
             "-O3",
             "-Wno-unused-value",
             "-Wno-unused-function",
-        ]
+        ],
     )
 
 # The "cibuildwheel" tool sets AUDITWHEEL_ARCH variable to architecture strings
@@ -117,7 +117,7 @@ EXT_MODULES = [
     ),
 ]
 
-VERSION = "0.4.0"
+VERSION = "0.4.0.dev1"
 URL = "https://github.com/escherba/python-metrohash"
 
 

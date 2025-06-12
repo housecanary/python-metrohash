@@ -1,0 +1,13 @@
+--index https://nexus.housecanary.net/repository/pypi-all/simple/
+
+build
+coverage
+flake8
+flake8-commas
+flake8-comprehensions
+flake8-debugger
+flake8-logging-format
+flake8-tidy-imports
+parameterized
+pytest
+tox
